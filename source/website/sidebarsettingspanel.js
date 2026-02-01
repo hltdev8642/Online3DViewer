@@ -212,6 +212,8 @@ class SettingsModelDisplaySection extends SettingsSection
         this.thresholdSlider = null;
         this.thresholdSliderValue = null;
         this.edgeSettingsDiv = null;
+
+        this.gridDisplayToggle = null;
     }
 
     Init (callbacks)
@@ -298,6 +300,14 @@ class SettingsModelDisplaySection extends SettingsSection
         this.thresholdSlider.value = this.settings.edgeSettings.edgeThreshold;
         this.thresholdSliderValue.innerHTML = this.settings.edgeSettings.edgeThreshold;
 
+        // Grid display toggle
+        let gridParameterDiv = AddDiv (this.contentDiv, 'ov_sidebar_parameter');
+        this.gridDisplayToggle = AddToggle (gridParameterDiv, 'ov_sidebar_parameter_toggle');
+        AddDiv (gridParameterDiv, 'ov_sidebar_parameter_text', Loc ('Show Grid & Axes'));
+        this.gridDisplayToggle.OnChange (() => {
+            this.callbacks.onGridDisplayChanged (this.gridDisplayToggle.GetStatus ());
+        });
+
         this.edgeDisplayToggle.SetStatus (this.settings.edgeSettings.showEdges);
         ShowDomElement (this.edgeSettingsDiv, this.settings.edgeSettings.showEdges);
     }
@@ -368,6 +378,10 @@ class SettingsModelDisplaySection extends SettingsSection
 
         if (this.edgeColorPicker !== null) {
             this.edgeColorPicker.hide ();
+        }
+
+        if (this.gridDisplayToggle !== null) {
+            this.gridDisplayToggle.SetStatus (false);
         }
     }
 }

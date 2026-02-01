@@ -139,3 +139,73 @@ div.ov_popup.sidebar
 {
 	width: 344px;
 }
+
+/* Material Inspector Styles */
+div.ov_sidebar_subtitle
+{
+	font-weight: bold;
+	font-size: 12px;
+	margin-top: 15px;
+	margin-bottom: 8px;
+	color: var(--ov_primary_text_color);
+}
+
+div.ov_sidebar_property
+{
+	display: flex;
+	align-items: center;
+	margin: 5px 0px;
+	padding: 3px 0px;
+	font-size: 12px;
+}
+
+div.ov_sidebar_property_name
+{
+	flex: 0 0 120px;
+	color: var(--ov_secondary_text_color);
+	font-weight: 500;
+}
+
+div.ov_sidebar_property_value
+{
+	flex: 1;
+	display: flex;
+	align-items: center;
+	color: var(--ov_primary_text_color);
+	word-break: break-all;
+}
+
+div.ov_sidebar_property_indented
+{
+	display: flex;
+	align-items: center;
+	margin: 5px 0px 5px 20px;
+	padding: 3px 0px;
+	font-size: 11px;
+}
+
+div.ov_sidebar_color_box
+{
+	width: 20px;
+	height: 20px;
+	border: 1px solid var(--ov_border_color);
+	border-radius: 3px;
+	margin-right: 8px;
+	flex-shrink: 0;
+}
+
+div.ov_sidebar_color_text
+{
+	font-size: 11px;
+	color: var(--ov_secondary_text_color);
+}
+
+div.ov_sidebar_property_url
+{
+	font-size: 10px;
+	color: var(--ov_link_color);
+	max-width: 200px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}

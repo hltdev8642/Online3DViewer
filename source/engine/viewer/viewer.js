@@ -7,6 +7,7 @@ import { GetDomElementInnerDimensions } from './domutils.js';
 import { Navigation } from './navigation.js';
 import { ShadingModel } from './shadingmodel.js';
 import { ViewerModel, ViewerMainModel } from './viewermodel.js';
+import { GridHelper } from './gridhelper.js';
 
 import * as THREE from 'three';
 
@@ -172,6 +173,7 @@ export class Viewer
         this.shadingModel = null;
         this.navigation = null;
         this.upVector = null;
+        this.gridHelper = null;
         this.settings = {
             animationSteps : 40
         };
@@ -202,6 +204,7 @@ export class Viewer
 
         this.InitNavigation ();
         this.InitShading ();
+        this.InitGrid ();
 
         this.Render ();
     }
@@ -543,9 +546,31 @@ export class Viewer
         this.shadingModel = new ShadingModel (this.scene);
     }
 
+    InitGrid ()
+    {
+        this.gridHelper = new GridHelper (this.scene);
+    }
+
     GetShadingType ()
     {
         return this.shadingModel.type;
+    }
+
+    SetGridVisible (visible)
+    {
+        this.gridHelper.SetVisible (visible);
+        this.Render ();
+    }
+
+    IsGridVisible ()
+    {
+        return this.gridHelper.IsVisible ();
+    }
+
+    UpdateGridSize (boundingSphere)
+    {
+        this.gridHelper.UpdateGridSize (boundingSphere);
+        this.Render ();
     }
 
     GetImageSize ()

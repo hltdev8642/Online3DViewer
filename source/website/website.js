@@ -16,6 +16,13 @@ import { ThreeModelLoaderUI } from './threemodelloaderui.js';
 import { Toolbar } from './toolbar.js';
 import { DownloadModel, ShowExportDialog } from './exportdialog.js';
 import { ShowSnapshotDialog } from './snapshotdialog.js';
+import { ShowModelInfoDialog } from './modelinfodialog.js';
+import { ShowKeyboardShortcutsDialog } from './keyboardshortcutsdialog.js';
+import { ShowScreenshotDialog } from './screenshottool.js';
+import { ShowMeasurementDialog } from './measurementtools.js';
+import { TogglePerformanceMonitor } from './performancemonitor.js';
+import { ShowSelectionToolsMenu } from './selectiontools.js';
+import { ShowEnvironmentSettingsDialog } from './environmentsettingsdialog.js';
 import { AddSvgIconElement, GetFilesFromDataTransfer, InstallTooltip, IsSmallWidth } from './utils.js';
 import { ShowOpenUrlDialog } from './openurldialog.js';
 import { ShowSharingDialog } from './sharingdialog.js';
@@ -198,6 +205,7 @@ export class Website
         this.uiState = WebsiteUIState.Undefined;
         this.layouter = new WebsiteLayouter (this.parameters, this.navigator, this.sidebar, this.viewer, this.measureTool);
         this.model = null;
+        this.importResult = null;
     }
 
     Load ()
@@ -219,6 +227,7 @@ export class Website
         this.InitViewer ();
         this.InitToolbar ();
         this.InitDragAndDrop ();
+        this.InitKeyboardShortcuts ();
         this.InitSidebar ();
         this.InitNavigator ();
         this.InitCookieConsent ();
@@ -295,6 +304,7 @@ export class Website
     OnModelLoaded (importResult, threeObject)
     {
         this.model = importResult.model;
+        this.importResult = importResult;
         this.parameters.fileNameDiv.innerHTML = importResult.mainFile;
         this.viewer.SetMainObject (threeObject);
         this.viewer.SetUpVector (Direction.Y, false);
@@ -721,12 +731,41 @@ export class Website
                 }
             });
         });
+        AddButton (this.toolbar, 'export', Loc ('Batch Export'), ['only_full_width', 'only_on_model'], () => {
+            ShowBatchExportDialog (this.model, this.viewer, {
+                isMeshVisible : (meshInstanceId) => {
+                    return this.navigator.IsMeshVisible (meshInstanceId);
+                }
+            });
+        });
         AddButton (this.toolbar, 'share', Loc ('Share'), ['only_full_width', 'only_on_model'], () => {
             ShowSharingDialog (importer.GetFileList (), this.settings, this.viewer);
         });
         AddSeparator (this.toolbar, ['only_full_width', 'only_on_model']);
         AddButton (this.toolbar, 'snapshot', Loc ('Create snapshot'), ['only_full_width', 'only_on_model'], () => {
             ShowSnapshotDialog (this.viewer);
+        });
+        AddButton (this.toolbar, 'camera', Loc ('Screenshot'), ['only_full_width', 'only_on_model'], () => {
+            ShowScreenshotDialog (this.viewer, this.viewer.canvas);
+        });
+        AddButton (this.toolbar, 'info', Loc ('Model Info'), ['only_full_width', 'only_on_model'], () => {
+            ShowModelInfoDialog (this.model, this.viewer, this.importResult);
+        });
+        AddSeparator (this.toolbar, ['only_full_width', 'only_on_model']);
+        AddButton (this.toolbar, 'measure', Loc ('Measure'), ['only_full_width', 'only_on_model'], () => {
+            ShowMeasurementDialog (this.viewer, this.viewer.canvas);
+        });
+        AddButton (this.toolbar, 'environment', Loc ('Environment'), ['only_full_width', 'only_on_model'], () => {
+            ShowEnvironmentSettingsDialog (this.viewer, this.settings, {
+                onBackgroundColorChanged: () => {
+                    this.settings.SaveToCookies ();
+                    this.viewer.SetBackgroundColor (this.settings.backgroundColor);
+                    this.viewer.Render ();
+                }
+            });
+        });
+        AddButton (this.toolbar, 'stats', Loc ('Performance'), ['only_full_width', 'only_on_model'], () => {
+            TogglePerformanceMonitor (this.viewer);
         });
 
         EnumeratePlugins (PluginType.Toolbar, (plugin) => {
@@ -752,6 +791,9 @@ export class Website
             }
             HandleEvent ('theme_changed', this.settings.themeId === Theme.Light ? 'light' : 'dark');
             this.SwitchTheme (this.settings.themeId, true);
+        });
+        AddButton (this.toolbar, 'info', Loc ('Keyboard shortcuts'), ['align_right'], () => {
+            ShowKeyboardShortcutsDialog ();
         });
 
         this.parameters.fileInput.addEventListener ('change', (ev) => {
@@ -784,6 +826,72 @@ export class Website
                 }
             });
         }, false);
+    }
+
+    InitKeyboardShortcuts ()
+    {
+        window.addEventListener ('keydown', (ev) => {
+            // F11 - Fullscreen is handled by browser
+            // Esc - handled by dialogs
+
+            if (!this.HasLoadedModel ()) {
+                return;
+            }
+
+            // F - Fit to window
+            if (ev.key === 'f' || ev.key === 'F') {
+                ev.preventDefault ();
+                this.FitModelToWindow (false);
+            }
+
+            // Y - Set Y axis as up
+            if (ev.key === 'y' || ev.key === 'Y') {
+                ev.preventDefault ();
+                this.viewer.SetUpVector (Direction.Y, false);
+            }
+
+            // Z - Set Z axis as up
+            if (ev.key === 'z' || ev.key === 'Z') {
+                ev.preventDefault ();
+                this.viewer.SetUpVector (Direction.Z, false);
+            }
+
+            // ? - Show shortcuts dialog
+            if (ev.key === '?' && ev.shiftKey) {
+                ev.preventDefault ();
+                ShowKeyboardShortcutsDialog ();
+            }
+
+            // M - Measurement tools
+            if (ev.key === 'm' || ev.key === 'M') {
+                ev.preventDefault ();
+                ShowMeasurementDialog (this.viewer, this.viewer.canvas);
+            }
+
+            // P - Performance monitor
+            if (ev.key === 'p' || ev.key === 'P') {
+                ev.preventDefault ();
+                TogglePerformanceMonitor (this.viewer);
+            }
+
+            // S - Screenshot (Ctrl+S or Cmd+S)
+            if ((ev.key === 's' || ev.key === 'S') && (ev.ctrlKey || ev.metaKey)) {
+                ev.preventDefault ();
+                ShowScreenshotDialog (this.viewer, this.viewer.canvas);
+            }
+
+            // E - Environment settings
+            if (ev.key === 'e' || ev.key === 'E') {
+                ev.preventDefault ();
+                ShowEnvironmentSettingsDialog (this.viewer, this.settings, {
+                    onBackgroundColorChanged: () => {
+                        this.settings.SaveToCookies ();
+                        this.viewer.SetBackgroundColor (this.settings.backgroundColor);
+                        this.viewer.Render ();
+                    }
+                });
+            }
+        });
     }
 
     InitSidebar ()
@@ -824,6 +932,15 @@ export class Website
             onEdgeDisplayChanged : () => {
                 HandleEvent ('edge_display_changed', this.settings.showEdges ? 'on' : 'off');
                 this.UpdateEdgeDisplay ();
+            },
+            onGridDisplayChanged : (visible) => {
+                this.viewer.SetGridVisible (visible);
+                if (visible && this.model) {
+                    let boundingSphere = this.viewer.GetBoundingSphere ((meshUserData) => {
+                        return this.navigator.IsMeshVisible (meshUserData.originalMeshInstanceId);
+                    });
+                    this.viewer.UpdateGridSize (boundingSphere);
+                }
             },
             onResizeRequested : () => {
                 this.layouter.Resize ();
